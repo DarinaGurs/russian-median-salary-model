@@ -1,0 +1,389 @@
+
+R version 4.4.3 (2025-02-28) -- "Trophy Case"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[R.app GUI 1.81 (8497) aarch64-apple-darwin20]
+
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+[Workspace restored from /Users/darina/.RData]
+[History restored from /Users/darina/.Rapp.history]
+
+> library(readxl)
+> data <- read_excel("~/Downloads/моя Diploma/Jupyter блокноты/median - Лист1.xlsx")
+                                                                     
+> library(tseries)
+
+    ‘tseries’ version: 0.10-58
+
+    ‘tseries’ is a package for time series analysis and
+    computational finance.
+
+    See ‘library(help="tseries")’ for details.
+
+> library(zoo)
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+> 
+> # Если столбец называется "Median"
+> ts_data <- ts(data$median, start = c(2017, 1), frequency = 12)
+> 
+> library(forecast)
+> library(tseries)
+> library(ggplot2)
+> 
+> # Создание временного ряда
+> wage_data <- ts(data$median, 
++                 start = c(2017, 1), 
++                 frequency = 12)
+> 
+> # Визуализация
+> autoplot(wage_data) + 
++   ggtitle("Динамика медианной заработной платы") +
++   ylab("Рублей") + xlab("Год")
+Error in UseMethod("depth") : 
+  no applicable method for 'depth' applied to an object of class "NULL"
+> 
+> # Тест Дики-Фуллера
+> adf.test(wage_data) # p-value > 0.05 - ряд нестационарен
+
+	Augmented Dickey-Fuller Test
+
+data:  wage_data
+Dickey-Fuller = -0.088212, Lag order = 4, p-value = 0.99
+alternative hypothesis: stationary
+
+Warning message:
+In adf.test(wage_data) : p-value greater than printed p-value
+> 
+> # Тест KPSS
+> kpss.test(wage_data) # p-value < 0.05 - подтверждает нестационарность
+
+	KPSS Test for Level Stationarity
+
+data:  wage_data
+KPSS Level = 2.388, Truncation lag parameter = 3, p-value =
+0.01
+
+Warning message:
+In kpss.test(wage_data) : p-value smaller than printed p-value
+> 
+> # Определение порядка дифференцирования
+> ndiffs(wage_data) # Обычное дифференцирование
+[1] 1
+> nsdiffs(wage_data) # Сезонное дифференцирование
+[1] 1
+> 
+> # Логарифмирование для стабилизации дисперсии
+> log_wage <- log(wage_data)
+> 
+> # Сезонное дифференцирование
+> diff_wage <- diff(log_wage, lag = 12)
+> 
+> # Проверка стационарности после преобразований
+> adf.test(diff_wage)
+
+	Augmented Dickey-Fuller Test
+
+data:  diff_wage
+Dickey-Fuller = -2.9862, Lag order = 4, p-value = 0.1714
+alternative hypothesis: stationary
+
+> kpss.test(diff_wage)
+
+	KPSS Test for Level Stationarity
+
+data:  diff_wage
+KPSS Level = 0.57462, Truncation lag parameter = 3, p-value =
+0.02494
+
+> 
+> # Автоматический подбор
+> best_model <- auto.arima(log_wage,
++                         seasonal = TRUE,
++                         stepwise = FALSE,
++                         approximation = FALSE,
++                         trace = TRUE)
+
+ ARIMA(0,1,0)(0,1,0)[12]                    : -361.0353
+ ARIMA(0,1,0)(0,1,1)[12]                    : -377.8665
+ ARIMA(0,1,0)(0,1,2)[12]                    : -375.7572
+ ARIMA(0,1,0)(1,1,0)[12]                    : -376.8466
+ ARIMA(0,1,0)(1,1,1)[12]                    : -375.7993
+ ARIMA(0,1,0)(1,1,2)[12]                    : Inf
+ ARIMA(0,1,0)(2,1,0)[12]                    : -374.7994
+ ARIMA(0,1,0)(2,1,1)[12]                    : Inf
+ ARIMA(0,1,0)(2,1,2)[12]                    : -374.3751
+ ARIMA(0,1,1)(0,1,0)[12]                    : -363.4803
+ ARIMA(0,1,1)(0,1,1)[12]                    : -386.5133
+ ARIMA(0,1,1)(0,1,2)[12]                    : -384.6941
+ ARIMA(0,1,1)(1,1,0)[12]                    : -383.9913
+ ARIMA(0,1,1)(1,1,1)[12]                    : -384.8643
+ ARIMA(0,1,1)(1,1,2)[12]                    : Inf
+ ARIMA(0,1,1)(2,1,0)[12]                    : -382.698
+ ARIMA(0,1,1)(2,1,1)[12]                    : -383.4707
+ ARIMA(0,1,1)(2,1,2)[12]                    : Inf
+ ARIMA(0,1,2)(0,1,0)[12]                    : -362.313
+ ARIMA(0,1,2)(0,1,1)[12]                    : -384.3368
+ ARIMA(0,1,2)(0,1,2)[12]                    : -382.4614
+ ARIMA(0,1,2)(1,1,0)[12]                    : -382.4093
+ ARIMA(0,1,2)(1,1,1)[12]                    : -382.6416
+ ARIMA(0,1,2)(1,1,2)[12]                    : Inf
+ ARIMA(0,1,2)(2,1,0)[12]                    : -380.7185
+ ARIMA(0,1,2)(2,1,1)[12]                    : -381.2413
+ ARIMA(0,1,3)(0,1,0)[12]                    : -360.4744
+ ARIMA(0,1,3)(0,1,1)[12]                    : -382.6293
+ ARIMA(0,1,3)(0,1,2)[12]                    : -380.6186
+ ARIMA(0,1,3)(1,1,0)[12]                    : -380.3922
+ ARIMA(0,1,3)(1,1,1)[12]                    : -380.7576
+ ARIMA(0,1,3)(2,1,0)[12]                    : -378.6966
+ ARIMA(0,1,4)(0,1,0)[12]                    : -358.213
+ ARIMA(0,1,4)(0,1,1)[12]                    : -380.6932
+ ARIMA(0,1,4)(1,1,0)[12]                    : -379.5696
+ ARIMA(0,1,5)(0,1,0)[12]                    : -358.7758
+ ARIMA(1,1,0)(0,1,0)[12]                    : -362.1539
+ ARIMA(1,1,0)(0,1,1)[12]                    : -383.8904
+ ARIMA(1,1,0)(0,1,2)[12]                    : -381.9243
+ ARIMA(1,1,0)(1,1,0)[12]                    : -381.2765
+ ARIMA(1,1,0)(1,1,1)[12]                    : -382.0369
+ ARIMA(1,1,0)(1,1,2)[12]                    : Inf
+ ARIMA(1,1,0)(2,1,0)[12]                    : -379.8867
+ ARIMA(1,1,0)(2,1,1)[12]                    : -380.683
+ ARIMA(1,1,0)(2,1,2)[12]                    : Inf
+ ARIMA(1,1,1)(0,1,0)[12]                    : -361.9144
+ ARIMA(1,1,1)(0,1,1)[12]                    : -384.3238
+ ARIMA(1,1,1)(0,1,2)[12]                    : -382.4488
+ ARIMA(1,1,1)(1,1,0)[12]                    : -382.2716
+ ARIMA(1,1,1)(1,1,1)[12]                    : -382.6257
+ ARIMA(1,1,1)(1,1,2)[12]                    : Inf
+ ARIMA(1,1,1)(2,1,0)[12]                    : Inf
+ ARIMA(1,1,1)(2,1,1)[12]                    : Inf
+ ARIMA(1,1,2)(0,1,0)[12]                    : -360.3229
+ ARIMA(1,1,2)(0,1,1)[12]                    : -382.2495
+ ARIMA(1,1,2)(0,1,2)[12]                    : -380.3137
+ ARIMA(1,1,2)(1,1,0)[12]                    : -380.471
+ ARIMA(1,1,2)(1,1,1)[12]                    : -380.5044
+ ARIMA(1,1,2)(2,1,0)[12]                    : -378.8146
+ ARIMA(1,1,3)(0,1,0)[12]                    : -358.2086
+ ARIMA(1,1,3)(0,1,1)[12]                    : -380.367
+ ARIMA(1,1,3)(1,1,0)[12]                    : -378.2244
+ ARIMA(1,1,4)(0,1,0)[12]                    : -356.2105
+ ARIMA(2,1,0)(0,1,0)[12]                    : -362.9658
+ ARIMA(2,1,0)(0,1,1)[12]                    : -385.44
+ ARIMA(2,1,0)(0,1,2)[12]                    : -383.5491
+ ARIMA(2,1,0)(1,1,0)[12]                    : -383.2571
+ ARIMA(2,1,0)(1,1,1)[12]                    : -383.7236
+ ARIMA(2,1,0)(1,1,2)[12]                    : Inf
+ ARIMA(2,1,0)(2,1,0)[12]                    : -381.6701
+ ARIMA(2,1,0)(2,1,1)[12]                    : -382.3823
+ ARIMA(2,1,1)(0,1,0)[12]                    : -360.7846
+ ARIMA(2,1,1)(0,1,1)[12]                    : -383.2023
+ ARIMA(2,1,1)(0,1,2)[12]                    : -381.2521
+ ARIMA(2,1,1)(1,1,0)[12]                    : -381.1365
+ ARIMA(2,1,1)(1,1,1)[12]                    : -381.4314
+ ARIMA(2,1,1)(2,1,0)[12]                    : -379.4349
+ ARIMA(2,1,2)(0,1,0)[12]                    : -360.6168
+ ARIMA(2,1,2)(0,1,1)[12]                    : -381.5333
+ ARIMA(2,1,2)(1,1,0)[12]                    : -379.2929
+ ARIMA(2,1,3)(0,1,0)[12]                    : Inf
+ ARIMA(3,1,0)(0,1,0)[12]                    : -360.8017
+ ARIMA(3,1,0)(0,1,1)[12]                    : -383.2274
+ ARIMA(3,1,0)(0,1,2)[12]                    : -381.2749
+ ARIMA(3,1,0)(1,1,0)[12]                    : -381.1779
+ ARIMA(3,1,0)(1,1,1)[12]                    : -381.4562
+ ARIMA(3,1,0)(2,1,0)[12]                    : -379.4704
+ ARIMA(3,1,1)(0,1,0)[12]                    : -361.0014
+ ARIMA(3,1,1)(0,1,1)[12]                    : -384.8643
+ ARIMA(3,1,1)(1,1,0)[12]                    : -380.0501
+ ARIMA(3,1,2)(0,1,0)[12]                    : Inf
+ ARIMA(4,1,0)(0,1,0)[12]                    : -358.7462
+ ARIMA(4,1,0)(0,1,1)[12]                    : -381.4718
+ ARIMA(4,1,0)(1,1,0)[12]                    : -378.8519
+ ARIMA(4,1,1)(0,1,0)[12]                    : -356.854
+ ARIMA(5,1,0)(0,1,0)[12]                    : -357.5934
+
+
+
+ Best model: ARIMA(0,1,1)(0,1,1)[12]                    
+
+> 
+> # Вывод результатов
+> summary(best_model)
+Series: log_wage 
+ARIMA(0,1,1)(0,1,1)[12] 
+
+Coefficients:
+          ma1     sma1
+      -0.3918  -0.6561
+s.e.   0.1031   0.1204
+
+sigma^2 = 0.0005021:  log likelihood = 196.41
+AIC=-386.82   AICc=-386.51   BIC=-379.56
+
+Training set error measures:
+                      ME     RMSE        MAE       MPE      MAPE
+Training set 0.001541096 0.020582 0.01498425 0.0136363 0.1416962
+                  MASE        ACF1
+Training set 0.1177342 -0.02278181
+> 
+> # Проверка остатков
+> checkresiduals(best_model)
+
+	Ljung-Box test
+
+data:  Residuals from ARIMA(0,1,1)(0,1,1)[12]
+Q* = 11.309, df = 17, p-value = 0.8401
+
+Model df: 2.   Total lags used: 19
+
+> 
+> library(gridExtra)
+> 
+> # Создание графиков с настройками
+> p2 <- autoplot(log_wage, colour = "#444866", size = 0.5) + 
++   ggtitle("Логарифмированные данные (log)") +
++   ylab("log(y_i)") +  
++   xlab("") +
++   theme_minimal() +
++   theme(plot.title = element_text(color = "#444866", size = 10),
++         axis.title = element_text(size = 8))
+> 
+> p3 <- autoplot(diff_wage, colour = "#444866", size = 0.5) + 
++   ggtitle("Сезонно дифференцированные (lag=12)") +
++   ylab("Δ (log)") +  
++   xlab("") +
++   theme_minimal() +
++   theme(plot.title = element_text(color = "#444866", size = 10),
++         axis.title = element_text(size = 8))
+> 
+> p4 <- autoplot(diff2_wage, colour = "#444866", size = 0.5) + 
++   ggtitle("Дважды дифференцированные") +
++   ylab("Δ² (log)") +  
++   xlab("Дата") +
++   theme_minimal() +
++   theme(plot.title = element_text(color = "#444866", size = 10),
++         axis.title = element_text(size = 8))
+Error: object 'diff2_wage' not found
+> 
+> # Сохранение в PNG с настройками
+> png("time_series_transformations.png", 
++     width = 360,       # Ширина в мм
++     height = 220,      # Высота в мм
++     units = "mm",      # Единицы измерения - миллиметры
++     res = 300)         # Разрешение 300 dpi
+> 
+> # Создание компоновки графиков
+> grid.arrange(
++   p2, p3, p4,
++   ncol = 1,
++   heights = c(1, 1, 1.1)  # Небольшое увеличение места для последнего графика
++ )
+Error: object 'p4' not found
+> 
+> # Закрытие графического устройства
+> dev.off()
+null device 
+          1 
+> 
+> # Сообщение о сохранении
+> message("График сохранён как 'time_series_transformations.png' в директории: ", getwd())
+График сохранён как 'time_series_transformations.png' в директории: /Users/darina
+> # 1. Создаем прогноз
+> forecast_log <- forecast(best_model, h = 12, level = 95)
+> 
+> # 2. Преобразуем в исходную шкалу
+> original_fitted <- exp(fitted(best_model))
+> original_forecast_mean <- exp(forecast_log$mean)
+> original_forecast_lower <- exp(forecast_log$lower[, "95%"])
+> original_forecast_upper <- exp(forecast_log$upper[, "95%"])
+> 
+> # 3. Подготовка данных для графика
+> forecast_band <- data.frame(
++   Date = time(original_forecast_mean),
++   Forecast = as.numeric(original_forecast_mean),
++   Lower = as.numeric(original_forecast_lower),
++   Upper = as.numeric(original_forecast_upper)
++ )
+> 
+> # 4. Построение графика с легендой слева
+> p <- ggplot() +
++   # Исходные данные (черные)
++   geom_line(aes(x = time(wage_data), y = as.numeric(wage_data), color = "Исходные данные"), 
++             linewidth = 0.7) +
++   # Подгонка модели (красные)
++   geom_line(aes(x = time(original_fitted), y = as.numeric(original_fitted), color = "Аппроксимация модели"), 
++             linewidth = 0.7) +
++   # Доверительный интервал (светло-оранжевый)
++   geom_ribbon(data = forecast_band,
++               aes(x = Date, ymin = Lower, ymax = Upper, fill = "95% доверительный интервал"),
++               alpha = 0.2) +
++   # Прогноз (оранжевый пунктир)
++   geom_line(data = forecast_band,
++             aes(x = Date, y = Forecast, color = "Прогноз"),
++             linewidth = 0.7, linetype = "dashed") +
++   # Оформление
++   labs(y = "Медианная заработная плата, руб./мес.", 
++        x = "Дата") +
++   theme_minimal(base_size = 14) +
++   scale_color_manual(
++     name = "",
++     values = c("Исходные данные" = "black",
++                "Аппроксимация модели" = "red",
++                "Прогноз" = "#ff7f0e"),
++     guide = guide_legend(
++       direction = "vertical",
++       title.position = "top",
++       label.position = "right"
++     )
++   ) +
++   scale_fill_manual(
++     name = "",
++     values = c("95% доверительный интервал" = "#ff7f0e"),
++     guide = guide_legend(
++       direction = "vertical",
++       title.position = "top",
++       label.position = "right"
++     )
++   ) +
++   theme(
++     legend.position = "right",
++     legend.box = "vertical",
++     legend.spacing.y = unit(0.5, "cm"),
++     legend.text = element_text(size = 12),
++     legend.title = element_text(size = 12),
++     axis.title = element_text(size = 14),
++     axis.text = element_text(size = 10),
++     panel.grid.minor = element_blank()
++   ) +
++   # Добавляем отступы вокруг легенды
++   theme(legend.margin = margin(l = 10))
+> 
+> # Исправляем предупреждение о ts-объекте
+> p <- p + scale_x_continuous() 
+> 
+> print(p)
+> 
+> # 5. Сохранение графика
+> ggsave("wage_forecast_with_CI.png", plot = p, width = 12, height = 6, dpi = 300)
+> 
