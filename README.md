@@ -43,7 +43,7 @@
 1.  **Клонируйте репозиторий:**
 
     ```bash
-    git clone https://github.com/your-username/russian-median-salary-model.git
+    git clone https://github.com/DarinaGurs/russian-median-salary-model.git
     cd russian-median-salary-model
     ```
 
@@ -53,11 +53,7 @@
     install.packages(c("forecast", "tseries", "readxl", "zoo", "ggplot2", "tidyverse"))
     ```
 
-3.  **Воспроизведите окружение:**
-
-    Полная информация о сессии и версиях пакетов доступна в файле `environment/session_info.txt`.
-
-4.  **Запустите анализ:**
+3.  **Запустите анализ:**
 
     Откройте файл `scripts/salary_time_series_analysis.R` в RStudio и выполните его пошагово или целиком.
 
